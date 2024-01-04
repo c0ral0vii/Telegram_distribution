@@ -5,7 +5,3 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-
-def get_api():
-    ...

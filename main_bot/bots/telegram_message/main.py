@@ -1,20 +1,23 @@
+import asyncio
+
 from opentele.td import TDesktop
 from opentele.api import API, CreateNewSession
+from telethon import TelegramClient
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import ChannelParticipantsSearch
 
 
-async def get_users(group_username: str, _send_message: bool = False) -> None:
+
+
+async def get_users(group_username: str = 'ru_python', _send_message: bool = False) -> None:
     '''Получение пользователей и запись в файл со вссеми пользователями'''
 
     tdataFolder = r"C:\\Users\\<username>\\AppData\\Roaming\\Telegram Desktop\\tdata"
     tdesk = TDesktop(tdataFolder)
 
     # Используйте официальный API iOS с случайно сгенерированной информацией об устройстве
-    api = API.TelegramIOS(api_id=24598056, api_hash='b33e418a411261a505fec3a526e56019').Generate()
+    client = TelegramClient('telegram.session', api_id=24598056, api_hash='b33e418a411261a505fec3a526e56019')
 
-    # Преобразуйте сессию TDesktop в клиент telethon
-    client = await tdesk.ToTelethon("newSession.session", CreateNewSession, api)
 
     # Подключитесь и распечатайте все вошедшие в систему устройства
     await client.connect()
@@ -51,6 +54,8 @@ async def send_message(client: API.TelegramIOS):
         for user in f.read():
             try:
                 await client.send_message(user.id, message)
-            except Exception as e:
-                print(f"Не удалось отправить сообщение пользователю {user.id}: {str(e)}")
+            except Exception as _ex:
+                print(_ex)
 
+
+asyncio.run(get_users())
