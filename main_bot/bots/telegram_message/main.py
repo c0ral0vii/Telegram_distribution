@@ -9,7 +9,7 @@ from telethon.tl.types import ChannelParticipantsSearch
 
 
 
-async def get_users(group_username: str = 'ru_python', _send_message: bool = False) -> None:
+async def get_users(group_username: str = 'ru_python') -> bool:
     '''Получение пользователей и запись в файл со вссеми пользователями'''
 
     tdataFolder = r"C:\\Users\\<username>\\AppData\\Roaming\\Telegram Desktop\\tdata"
@@ -17,7 +17,6 @@ async def get_users(group_username: str = 'ru_python', _send_message: bool = Fal
 
     # Используйте официальный API iOS с случайно сгенерированной информацией об устройстве
     client = TelegramClient('telegram.session', api_id=24598056, api_hash='b33e418a411261a505fec3a526e56019')
-
 
     # Подключитесь и распечатайте все вошедшие в систему устройства
     await client.connect()
@@ -29,7 +28,13 @@ async def get_users(group_username: str = 'ru_python', _send_message: bool = Fal
     limit = 10
 
     while True:
-        participants = await client(GetParticipantsRequest(group_username, ChannelParticipantsSearch(''), offset, limit, hash=0))
+        participants = await client(GetParticipantsRequest(
+            group_username,
+            ChannelParticipantsSearch(''),
+            offset,
+            limit,
+            hash=0
+        ))
 
         if not participants.users:
             break
@@ -39,9 +44,7 @@ async def get_users(group_username: str = 'ru_python', _send_message: bool = Fal
     with open('all_participants.txt', 'a') as f:
         f.write('\n'.join(all_participants))
 
-    if _send_message:
-        await send_message(client=client)
-    return all_participants
+    return True
 
 
 async def send_message(client: API.TelegramIOS):
