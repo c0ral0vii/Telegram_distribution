@@ -2,33 +2,38 @@ from aiogram import Router, F, types
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
-from .states.states import GetGroup
-from .files import new_message, get_user_id
+
+from bots.telegram_message.main import telegram_thread
+from .files import new_message
+
 
 main_router = Router()
 
 
 @main_router.message(CommandStart())
 async def start_message(message: types.Message):
-    await message.reply('Отправь ссылку на группу для получения пользователей, в таком виде "Группа (ссылка на группу)"')
+    '''/start'''
+
+    await message.reply('Отправь ссылку на группу для получения пользователей, в таком виде "Группа (ссылка на группу)" или измени сообщение командой "Сообщение (ваше сообщение)"')
 
 
-@main_router.message(GetGroup.group, F.text.startswith('Гру'))
-async def group(message: types.Message, state: FSMContext):
+@main_router.message(F.text.startswith('Гру'))
+async def group(message: types.Message):
+    '''Рассылка для пользователей из группы'''
+
     try:
+        await telegram_thread(group_name=message.text)
         await message.answer('Готово, напишите текст для пользователей, в таком виде "Сообщение (ваше сообщение)"!')
-        await state.set_state(GetGroup.group)
-        print(GetGroup.message)
     except Exception as _ex:
         print(_ex)
         await message.reply('Произошла какая то ошибка, обратитесь к разработчику :)')
 
 
-@main_router.message(GetGroup.message, F.text.startswith('Соо'))
-async def hello_message(message: types.Message, state: FSMContext):
+@main_router.message(F.text.startswith('Соо'))
+async def change_message(message: types.Message):
+    '''Изменение сообщения для рассылки'''
     try:
-        await state.set_state(GetGroup.message)
-        await message.reply('Готово, нажмите рассылка чтобы начать')
-
+        new_message(message=message.text)
+        await message.reply('Готово, сообщение изменилось')
     except Exception as _ex:
         print(_ex)

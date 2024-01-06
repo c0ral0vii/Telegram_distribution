@@ -13,4 +13,3 @@ def get_accounts():
 
 
 
-print(get_accounts())

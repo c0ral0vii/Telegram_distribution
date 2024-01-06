@@ -8,6 +8,7 @@ from aiogram.enums import ParseMode
 from main_bot.main import main_router
 from config.config import BOT_TOKEN
 
+
 async def start_bot():
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
     dp = Dispatcher()
