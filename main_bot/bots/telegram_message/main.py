@@ -1,64 +1,43 @@
 import asyncio
+import os
+import aiohttp
 
 from opentele.td import TDesktop
-from opentele.api import API, CreateNewSession
+from opentele.api import API, CreateNewSession, UseCurrentSession
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import ChannelParticipantsSearch
 
+from main_bot.etc.functions import get_accounts
 
 
 
-async def get_users(group_username: str = 'ru_python') -> bool:
+
+async def telegram_thread():
     '''Получение пользователей и запись в файл со вссеми пользователями'''
 
-    tdataFolder = r"C:\\Users\\<username>\\AppData\\Roaming\\Telegram Desktop\\tdata"
-    tdesk = TDesktop(tdataFolder)
+    accounts = get_accounts()
 
-    # Используйте официальный API iOS с случайно сгенерированной информацией об устройстве
-    client = TelegramClient('telegram.session', api_id=24598056, api_hash='b33e418a411261a505fec3a526e56019')
-
-    # Подключитесь и распечатайте все вошедшие в систему устройства
-    await client.connect()
-    await client.PrintSessions()
-
-    # Получите всех участников из группы
-    all_participants = []
-    offset = 0
-    limit = 10
-
-    while True:
-        participants = await client(GetParticipantsRequest(
-            group_username,
-            ChannelParticipantsSearch(''),
-            offset,
-            limit,
-            hash=0
-        ))
-
-        if not participants.users:
-            break
-        all_participants.extend(participants.users)
-        offset += len(participants.users)
-
-    with open('all_participants.txt', 'a') as f:
-        f.write('\n'.join(all_participants))
-
-    return True
-
-
-async def send_message(client: API.TelegramIOS):
-    '''Отправьте сообщение каждому участнику'''
-
-    with open('message.txt', 'r') as f:
-        message = f.read()
-
-    with open('all_participants.txt', 'r') as f:
-        for user in f.read():
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
+        for account in accounts:
             try:
-                await client.send_message(user.id, message)
+                tdata = os.path.join(os.path.abspath('input/telegram_accounts/' + account))
+                tdesk = TDesktop(tdata)
+
+                for file in os.listdir(os.path.abspath(tdata)):
+                    if file.endswith(".session"):
+                        exist = True
+                if exist is True:
+                    tdesk = TDesktop(tdata)
+                    client = await tdesk.ToTelethon(session=f"{tdata}.session", flag=UseCurrentSession)
+                else:
+                    tdesk = TDesktop(tdata)
+                    client = await tdesk.ToTelethon(session=f"{tdata}.session", flag=CreateNewSession)
+                await client.connect()
+                await client.PrintSessions()
             except Exception as _ex:
                 print(_ex)
 
+asyncio.run(telegram_thread())
 
-asyncio.run(get_users())
+

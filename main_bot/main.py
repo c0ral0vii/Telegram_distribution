@@ -25,4 +25,10 @@ async def group(message: types.Message, state: FSMContext):
 
 
 @main_router.message(GetGroup.message, F.text.startswith('Соо'))
-async def hello_message(message: types.Message):
+async def hello_message(message: types.Message, state: FSMContext):
+    try:
+        await state.set_state(GetGroup.message)
+        await message.reply('Готово, нажмите рассылка чтобы начать')
+
+    except Exception as _ex:
+        print(_ex)
