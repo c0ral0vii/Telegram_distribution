@@ -1,5 +1,4 @@
 import os
-import aiohttp
 
 from opentele.td import TDesktop
 from opentele.api import CreateNewSession, UseCurrentSession
@@ -52,3 +51,7 @@ async def telegram_thread(group_name: str):
             print(_ex)
 
 
+def new_thread():
+    '''Запуск спама в отдельном ядре'''
+
+    ...
