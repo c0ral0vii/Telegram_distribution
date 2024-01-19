@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 
 from opentele.td import TDesktop
 from opentele.api import CreateNewSession, UseCurrentSession
@@ -13,7 +14,7 @@ async def telegram_thread(group_name: str):
     '''Получение пользователей и запись в файл со всеми пользователями'''
 
     accounts = get_accounts()
-    message = get_message()
+    message = get_message(social='telegram')
 
     for account in accounts:
         try:
@@ -49,9 +50,4 @@ async def telegram_thread(group_name: str):
                         await client.disconnect()
         except Exception as _ex:
             print(_ex)
-
-
-def new_thread():
-    '''Запуск спама в отдельном ядре'''
-
-    ...
+            continue
