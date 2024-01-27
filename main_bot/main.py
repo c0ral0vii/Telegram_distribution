@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 
 
 from .bots.telegram_message.main import telegram_thread
-from .files import new_message_telegram, new_message_vk
+from .files import new_message
 
 
 main_router = Router()
@@ -39,7 +39,7 @@ async def change_message(message: types.Message):
     '''Изменение сообщения для рассылки'''
 
     try:
-        new_message_telegram(message=message.text)
+        new_message(message=message.text, social='telegram')
         await message.reply('Готово, сообщение изменилось')
     except Exception as _ex:
         print(_ex)
@@ -67,7 +67,7 @@ async def change_message_vk(message: types.Message):
     '''Изменение сообщения в вк'''
 
     try:
-        new_message_vk(message=message.text)
+        new_message(message=message.text, social='vk')
         await message.reply('Готово, сообщение изменилось')
     except Exception as _ex:
         print(_ex)

@@ -40,14 +40,23 @@ async def telegram_thread(group_name: str):
                     limit=100,
                     hash=0
                 ))
-
                 for user in participants.users:
-                    try:
-                        await client.send_message(user, message=message)
-                    except Exception as _ex:
-                        print(_ex)
-                    finally:
-                        await client.disconnect()
+                    print(user)
+
+                    # try:
+                    #     await client.send_message(user, message=message)
+                    # except Exception as _ex:
+                    #     print(_ex)
+                    # finally:
+                    #     await client.disconnect()
         except Exception as _ex:
             print(_ex)
             continue
+
+
+def new_telegram_thread():
+    '''
+    Запуск телеграмм спама в отдельном процессе
+    '''
+
+    ...
