@@ -1,6 +1,8 @@
 python-dotenv
 opentele
 Telethon
+TGSessionsConverter
+pyrogram
 aiogram
 selenium
 requests
