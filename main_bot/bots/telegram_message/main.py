@@ -94,7 +94,7 @@ class TClient:
 async def start(user: int, count: int, group: str):
     '''Запуск спама'''
 
-    message = ['привет']
+    message = get_message(social='telegram', user=user)
     accounts = get_accounts()
     proxys = get_proxy()
 

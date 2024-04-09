@@ -1,7 +1,7 @@
 python-dotenv
+SQLAlchemy
 opentele
 Telethon
-TGSessionsConverter
 pyrogram
 aiogram
 selenium
