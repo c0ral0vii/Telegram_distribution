@@ -7,9 +7,12 @@ from aiogram.enums import ParseMode
 
 from main_bot.main import main_router
 from config.config import BOT_TOKEN
+from models.model import async_init_db
 
 
 async def start_bot():
+    await async_init_db()
+
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
     dp = Dispatcher()
 

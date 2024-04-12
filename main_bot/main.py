@@ -4,7 +4,6 @@ from aiogram import Router, F, types
 from aiogram.filters import CommandStart
 from aiogram.types import FSInputFile
 
-from .bots.telegram_message.main import start
 from .files import new_message, create_user
 
 

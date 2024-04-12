@@ -1,5 +1,7 @@
 python-dotenv
 SQLAlchemy
+aiosqlite
+numpy
 opentele
 Telethon
 pyrogram
