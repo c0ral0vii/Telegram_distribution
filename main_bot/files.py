@@ -20,7 +20,7 @@ def new_message(message: str, social: str, user: int) -> None:
 
 
 def get_message(social: str, user: int) -> str:
-    message_file= os.path.join(os.getcwd(), f'temp/{user}/message.txt')
+    message_file= os.path.join(os.getcwd(), f'main_bot/bots/telegram_message/temp/{user}/message.txt')
 
     with open(message_file, 'r', encoding='utf-8') as f:
         message = f.read()

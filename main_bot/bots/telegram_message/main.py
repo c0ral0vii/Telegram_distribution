@@ -8,13 +8,14 @@ import socks
 
 from telethon import TelegramClient
 from telethon.errors import PhoneNumberBannedError, ChannelBannedError, UserDeactivatedBanError, \
-    AuthKeyUnregisteredError, UserDeactivatedError, InviteHashExpiredError, FloodWaitError
-from telethon.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
+AuthKeyUnregisteredError, UserDeactivatedError, InviteHashExpiredError, FloodWaitError, InputUserDeactivatedError
+from telethon.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest, SendInlineBotResultRequest
 from telethon.tl.functions.channels import JoinChannelRequest
 
 from main_bot.etc.functions import get_accounts, get_proxy
 from main_bot.files import get_message
-from services.accounts import get_accounts_db, change_status, add_users, get_users, add_history, add_account
+from services.accounts import get_accounts_db, change_status, add_users, get_users, add_history, add_account, \
+    delete_users, delete_history
 
 
 class TClient:
@@ -28,14 +29,13 @@ class TClient:
 
     async def connect(self):
         try:
-            self.client = TelegramClient(f'../../../input/telegram_accounts/{self.account.phone}.session',
+            self.client = TelegramClient(f'input/telegram_accounts/{self.account.phone}.session',
                                         api_id=6,
                                         api_hash=self.account.app_hash,
                                         device_model=self.account.device_model,
                                         app_version=self.account.app_version,
                                         system_version='4.16.30-vxCUSTOM',
                                         loop=asyncio.set_event_loop(asyncio.SelectorEventLoop()),
-                                        proxy=(socks.SOCKS5, self.account.proxy.split(':')[0], 50101, True, 'demidovicpav', '7afed7819af815908dc1715aa'),
                                         )
             await self.client.connect()
             await self.client.get_entity('me')
@@ -68,26 +68,49 @@ class TClient:
                 return 'Срок действия ссылки для приглашения истёк либо вам нужно подождать пару минут'
 
     async def send_messages(self):
-        try:
-            query = await self.client.inline_query('@PostBot', self.message[-1])
             for user in self.users:
-                if not user.username:
-                    continue
+                try:
 
-                entity = await self.client.get_entity(user.username)
-                await asyncio.sleep(random.uniform(2,4))
-                result = await query[0].click(entity)
+                    if not user.username:
+                        continue
 
-                await add_history(from_account=self.account.phone, username=user.username)
-                await asyncio.sleep(random.uniform(185, 420))
-        except Exception as e:
-            print(e)
-            if e == UserDeactivatedError or e == PhoneNumberBannedError or e == UserDeactivatedBanError:
-                await change_status(banned=True, phone=self.account.phone)
-            if e == FloodWaitError:
-                print(e.seconds)
-            return 'Ошибка при отправке сообщения'
-        finally:
+                    await asyncio.sleep(random.uniform(2,5))
+                    entity = await self.client.get_entity(int(user.username))
+                    await asyncio.sleep(random.uniform(15,30))
+                    query = await self.client.inline_query('@PostBot', query=self.message[-1], offset='0')
+                    await asyncio.sleep(random.uniform(2,4))
+                    result = await query[0].click(entity)
+
+                    await add_history(from_account=self.account.phone, username=user.username)
+                    await asyncio.sleep(random.uniform(185, 420))
+                except Exception as e:
+                    print(e)
+                    if e == UserDeactivatedError or e == PhoneNumberBannedError or e == UserDeactivatedBanError or e == InputUserDeactivatedError:
+                        await change_status(banned=True, phone=self.account.phone)
+
+                    if e == FloodWaitError:
+                        await asyncio.sleep(60)
+
+                        await asyncio.sleep(random.uniform(2, 5))
+                        entity = await self.client.get_entity(user.username)
+
+                        await asyncio.sleep(random.uniform(15, 30))
+                        query = await self.client.inline_query('@PostBot', query=self.message[-1], offset='0')
+                        await asyncio.sleep(random.uniform(2, 4))
+                        result = await query[0].click(entity)
+
+                    if e == SendInlineBotResultRequest:
+                        print(self.account.phone, 'flood')
+                        await asyncio.sleep(60)
+
+                        await asyncio.sleep(random.uniform(2, 5))
+                        entity = await self.client.get_entity(int(user.username))
+
+                        await asyncio.sleep(random.uniform(15, 30))
+                        query = await self.client.inline_query('@PostBot', query=self.message[-1], offset='0')
+                        await asyncio.sleep(random.uniform(2, 4))
+                        result = await query[0].click(entity)
+
             await self.disconnect()
 
     async def get_users(self):
@@ -96,33 +119,48 @@ class TClient:
         if '+' in self.group:
             await self.client(ImportChatInviteRequest(hash=self.group.split('/')[-1].replace('+', '')))
             users = await self.client.get_participants(self.group, aggressive=True)
-            print(users)
-            await add_users(users=users)
+            print(len(users))
+            if len(users) < 20:
+                messages = await self.client.get_messages(entity=self.group.split('/')[-1], limit=5000)
+                for message in messages:
+                    if message.sender_id:
+                        await add_users(users=message.sender_id)
 
         else:
-            group_name = await self.client(JoinChannelRequest(self.group))
+            group = self.group
+            group_name = await self.client(JoinChannelRequest(group))
             users = await self.client.get_participants(self.group, aggressive=True)
             print(len(users))
-            await add_users(users=users)
+            if len(users) < 20:
+                messages = await self.client.get_messages(entity=self.group.split('/')[-1], limit=5000)
+                for message in messages:
+                    if message.sender_id:
+                        await add_users(users=message.sender_id)
         await self.disconnect()
 
     async def main(self):
         if self.account.status != 'Banned':
             await self.connect()
+            await self.connect_to_group()
+            await asyncio.sleep(random.uniform(2, 4))
             await self.send_messages()
-
-
-
 
 
 async def start(user: int, count: int, group: str):
     '''Запуск спама'''
 
-    message = get_message(social='telegram', user=user)
-    accounts = await get_accounts_db()
-    # users = await get_users()
+    await delete_users()
+    await delete_history()
 
-    await TClient(account=accounts[int(random.uniform(0, len(accounts)))], message=message, group=group, count=count, users=[]).get_users()
+    accounts = await get_accounts_db()
+    message = get_message(social='telegram', user=user)
+
+    await TClient(account=accounts[int(random.uniform(0, len(accounts)))], message=message, group=group,
+                  count=count, users=[]).get_users()
+
+    users = await get_users(count=count)
+
+
     await asyncio.sleep(random.uniform(2,5))
     chunks = [list(chunk) for chunk in np.array_split(users, len(accounts))]
     print(chunks)
@@ -131,26 +169,29 @@ async def start(user: int, count: int, group: str):
         for account in accounts:
             task.create_task(TClient(account=account, message=message, group=group, count=count, users=chunks[next_chunk]).main())
             next_chunk += 1
+asyncio.run(start(user=944360812, count=10, group='https://t.me/kazanchat57'))
 
-asyncio.run(start(user=944360812, count=1000, group=r'https://t.me/kostromachat44'))
 
 async def add_accounts():
     accounts = get_accounts()
     proxys = get_proxy()
+    ready_accounts = await get_accounts_db()
 
     account_count = 0
     proxy_count = 0
 
     while account_count < len(accounts):
         try:
-            async with aiofiles.open(f'../../../input/telegram_accounts/{accounts[account_count]}.json', 'r') as file:
+            async with aiofiles.open(f'input/telegram_accounts/{accounts[account_count]}.json', 'r') as file:
                 data = await file.read()
                 js = json.loads(data)
         except FileNotFoundError:
-            continue
+            account_count += 1
 
-        await add_account(app_hash=js['app_hash'], proxy=proxys[proxy_count], app_version=js['app_version'], phone=js['phone'], device_model=js['device_model'])
+        finally:
+            await add_account(app_hash=js['app_hash'], proxy=proxys[proxy_count], app_version=js['sdk'], phone=accounts[account_count], device_model=js['device'])
 
         account_count += 1
         proxy_count += 1
 
+# asyncio.run(add_accounts())

@@ -14,15 +14,15 @@ class InstagramAccount:
 
     def login(self):
         browser = self.browser
-        browser.get('https://ok.ru/')
+        browser.get('https://www.instagram.com/')
         time.sleep(random.randint(2,6))
 
-        username_input = browser.find_element(By.NAME, 'st.email')
+        username_input = browser.find_element(By.NAME, 'username')
         username_input.clear()
         username_input.send_keys(self.username)
 
         time.sleep(5)
-        password_input = browser.find_element(By.NAME, 'st.password')
+        password_input = browser.find_element(By.NAME, 'password')
         password_input.clear()
         password_input.send_keys(self.password)
 
@@ -32,4 +32,4 @@ class InstagramAccount:
 
         self.browser.close()
         self.browser.quit()
-InstagramAccount = InstagramAccount('+375292387952', 'Celovek3213').login()
+InstagramAccount = InstagramAccount('demidovicpav4@gmail.com', 'Celovek3213').login()

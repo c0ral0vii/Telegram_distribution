@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import FSInputFile
 
 from .files import new_message, create_user
-
+from .bots.telegram_message.main import start
 
 main_router = Router()
 
@@ -27,10 +27,15 @@ async def group(message: types.Message):
     if len(accounts) == 0:
         await message.answer('В данный момент аккаунтов telegram - 0')
     else:
-        await message.reply('Спам начинается...')
-        count = message.text.split(' ')[-1]
-        users = await start(user=message.from_user.id, count=count)
-        await message.reply(f'Готово, {users}/{count}')
+        try:
+            await message.reply('Спам начинается...')
+            count = message.text.split(' ')[-1]
+            group = message.text.split(' ')[0]
+            users = await start(user=message.from_user.id, count=int(count), group=group)
+            print(users)
+        except Exception as e:
+            if e == ValueError:
+                await message.reply(f'Неправильная формулировка запроса')
     
 
 
@@ -44,13 +49,6 @@ async def change_message(message: types.Message):
     except Exception as _ex:
         print(_ex)
         await message.reply('Произошла какая то ошибка, обратитесь к разработчику :)')
-
-
-@main_router.message(F.text.startswith('Стат'))
-async def stats(message: types.Message):
-    await message.reply('Идёт проверка аккаунтов...')
-    accounts = check_accounts()
-    await message.reply(f'Незабаненых телеграмм аккаунтов - {accounts[0]}/{accounts[1]}')
 
 
 # @main_router.message(F.text.startswith('VK гру'))

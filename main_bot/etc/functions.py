@@ -5,7 +5,7 @@ def get_accounts() -> list:
     '''Получение аккаунтов из input/telegram_accounts'''
 
     try:
-        accounts_path = os.listdir(os.path.abspath('../../../input/telegram_accounts'))
+        accounts_path = os.listdir(os.path.abspath('input/telegram_accounts'))
         accounts = []
         # Сделать нормальную сортировку аккаунтов
         for account in accounts_path:
@@ -23,7 +23,7 @@ def get_accounts() -> list:
 def get_proxy():
     '''Получение прокси для пользователей'''
 
-    with open('../../../input/list_proxyseller.txt', 'r') as f:
+    with open('input/list_proxyseller.txt', 'r') as f:
         proxy = f.read().splitlines()
     return proxy
 

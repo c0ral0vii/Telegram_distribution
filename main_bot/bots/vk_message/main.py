@@ -13,6 +13,8 @@ from main_bot.etc.functions import get_accounts_vk
 service = Service(executable_path='')
 driver = webdriver.Firefox()
 
+def login():
+    '''Авторизация в вк'''
 def vk_thread(user: str, password: str):
     '''Запуск VK спама'''
 
