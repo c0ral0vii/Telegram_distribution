@@ -1,79 +1,75 @@
 import os
 
 from aiogram import Router, F, types
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, StateFilter, Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 
-from .files import new_message, create_user
-from .bots.telegram_message.main import start
+from main_bot.keyboards.keyboards import telegram_keyboard, current_spam_keyboard
+from config.config import ADMIN_PASSWORD
+from main_bot.fsm import AuthUser, CurrentSpam
+from models.accounts import create_auth_user, check_account
+from main_bot.middlewares.middleware import AuthMiddleware
+
 
 main_router = Router()
 
-
-@main_router.message(CommandStart())
-async def start_message(message: types.Message):
+@main_router.message(CommandStart(), StateFilter(None))
+async def start_message(message: types.Message, state: FSMContext):
     '''Начальная команда - /start '''
 
-    create_user(user=message.from_user.id)
-    await message.reply('Отправь ссылку на группу для получения пользователей, в таком виде "Группа (ссылка на группу)" или измени сообщение командой "Сообщение:(ваше сообщение)"')
-
-
-@main_router.message(F.text.startswith('Гру'))
-async def group(message: types.Message):
-    '''Рассылка для пользователей из группы'''
-
-    accounts = os.listdir(os.path.abspath('input/telegram_accounts'))
-
-    if len(accounts) == 0:
-        await message.answer('В данный момент аккаунтов telegram - 0')
+    if not await check_account(message.from_user.id):
+        await state.set_state(AuthUser.password)
+        await message.reply('Отправь пароль для входа в систему...')
     else:
-        try:
-            await message.reply('Спам начинается...')
-            count = message.text.split(' ')[-1]
-            group = message.text.split(' ')[0]
-            users = await start(user=message.from_user.id, count=int(count), group=group)
-            print(users)
-        except Exception as e:
-            if e == ValueError:
-                await message.reply(f'Неправильная формулировка запроса')
-    
+        await state.set_state(CurrentSpam.current_spam)
+        await message.answer('Выберите спам:', reply_markup=await current_spam_keyboard())
+
+@main_router.message(F.text, AuthUser.password)
+async def login(message: types.Message, state: FSMContext):
+    '''Вход'''
+
+    if message.text == ADMIN_PASSWORD:
+
+        await state.clear()
+
+        await create_auth_user(user_id=message.from_user.id)
+        await message.answer('Вы ввели правильный пароль')
+        await state.set_state(CurrentSpam.current_spam)
+        await message.answer('Выберите спам:', reply_markup=await current_spam_keyboard())
+    else:
+        await state.set_state(AuthUser.password)
+        await message.answer('Вы ввели неправильный пароль')
 
 
-@main_router.message(F.text.startswith('Соо'))
-async def change_message(message: types.Message):
-    '''Изменение сообщения для рассылки'''
+@main_router.callback_query(F.data == 'telegram_spam', CurrentSpam.current_spam)
+async def current_spam(call: types.CallbackQuery, state: FSMContext):
+    await call.message.answer(f'Спам был выбран - 👑TG👑', reply_markup=await telegram_keyboard())
 
-    try:
-        new_message(message=message.text, social='telegram', user=message.from_user.id)
-        await message.reply('Готово, сообщение изменилось')
-    except Exception as _ex:
-        print(_ex)
-        await message.reply('Произошла какая то ошибка, обратитесь к разработчику :)')
+@main_router.message(F.text == 'Изменить спам', CurrentSpam.current_spam)
+async def change_spam(message: types.Message, state: FSMContext):
+    '''Выбор спама'''
 
-
-# @main_router.message(F.text.startswith('VK гру'))
-# async def vk_group(message: types.Message):
-#     '''Получение группы в вк'''
-
-#     try:
-#         accounts = os.listdir(os.path.abspath('input/telegram_accounts'))
-#         if len(accounts) == 0:
-#             await message.answer('В данный момент аккаунтов VK - 0')
-#         else:
-#             await telegram_thread(group_name=message.text.strip())
-#             await message.answer('Готово, начинается рассылка')
-#     except Exception as _ex:
-#         print(_ex)
-#         await message.reply('Произошла какая то ошибка, обратитесь к разработчику :)')
+    await state.set_state(CurrentSpam.current_spam)
+    await message.answer('Выберите спам:', reply_markup=await current_spam_keyboard())
 
 
-# @main_router.message(F.text.startswith('VK соо'))
-# async def change_message_vk(message: types.Message):
-#     '''Изменение сообщения в вк'''
+@main_router.message(F.text == '📉Статистика📉', CurrentSpam.current_spam)
+async def telegram_stats(message: types.Message, state: FSMContext):
+    '''Статистика'''
 
-#     try:
-#         new_message(message=message.text, social='vk')
-#         await message.reply('Готово, сообщение изменилось')
-#     except Exception as _ex:
-#         print(_ex)
-#         await message.reply('Произошла какая то ошибка, обратитесь к разработчику :)')
+    await message.answer('🔴Список аккаунтов пуст🔴')
+
+
+@main_router.message(F.text == '👆Начать спам👆', CurrentSpam.current_spam)
+async def start_spam(message: types.Message, state: FSMContext):
+    '''Запуск спама'''
+
+    await message.answer('🔴Отсутствуют аккаунты, невозможно запустить спам..🔴')
+
+
+@main_router.message(F.text == 'Текущий спам', CurrentSpam.current_spam)
+async def check_spam(message: types.Message, state: FSMContext):
+    '''Статистика запущеного спама'''
+
+    await message.answer(f'🔴В данный момент ни один спам не запущен..🔴')

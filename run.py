@@ -5,7 +5,6 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 
-from main_bot.bots.telegram_message.main import add_accounts
 from main_bot.main import main_router
 from config.config import BOT_TOKEN
 from models.model import async_init_db
